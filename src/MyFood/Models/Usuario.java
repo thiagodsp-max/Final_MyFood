@@ -3,7 +3,7 @@ package MyFood.Models;
 import MyFood.Exceptions.*;
 
 //Classe Principal dos Usuarios
-public class Usuario {
+public abstract class Usuario {
     int id;
     String nome;
     String email;
@@ -24,11 +24,8 @@ public class Usuario {
     public String getMail() {
         return this.email;
     }
-    //public String getEndereco() {
-        //return this.nome;
-    //}
-    //public String getCpf() {
-        //return this.nome;
-    //}
+    public String getSenha() {
+        return this.senha;
+    }
 
 }
