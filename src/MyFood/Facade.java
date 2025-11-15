@@ -11,7 +11,7 @@ public class Facade {
     private Map<Integer, Usuario> users = new LinkedHashMap<>();
     private Map<Integer, Restaurante> lugar = new LinkedHashMap<>();
     private Map<Integer, Produto> prod = new LinkedHashMap<>();
-    //private Map<Integer, Pedido> pedidos = new LinkedHashMap<>();
+    private Map<Integer, Pedido> orders = new LinkedHashMap<>();
     private int k1=0;
     private int k2=0;
     private int k3=0;
@@ -245,11 +245,118 @@ public class Facade {
         return "{["+String.join(", ",estoque)+"]}";
     }
 
-    //public criarPedido(int client, int emp){}
-    //public getNumeroPedido(int client, int emp, int index){}
-    //public adicionarProduto(int num, int prod){}
-    //public getPedidos(int num, String atr){}
-    //public fecharPedido(int num){}
-    //public removerProduto(int pedido, String prod){}
+    public int criarPedido(int client, int emp) throws NaoEncontrado{
+        Usuario x=users.get(client);
+        if(x==null){
+            throw new NaoEncontrado(3);
+        }
+        if(!(x instanceof Cliente)){
+            throw new IllegalArgumentException("Dono de empresa nao pode fazer um pedido");
+        }
+        Restaurante y=lugar.get(emp);
+        if(y==null){
+            throw new NaoEncontrado(1);
+        }
+        for(Pedido z:orders.values()){
+            if(z.getIdcliente()==client && z.getIdempresa()==emp && z.getEstado().equals("aberto")){
+                throw new IllegalArgumentException("Nao e permitido ter dois pedidos em aberto para a mesma empresa");
+            }
+        }
+        //CRIAR UM PEDIDO
+        int number=k4++;
+        Pedido novo=new Pedido(number,x,y);
+        orders.put(number,novo);
+        return number;
+    }
+    public int getNumeroPedido(int client, int emp, int index) throws Invalido{
+        if(index<0){
+            throw new Invalido("Index");
+        }
+        List<Pedido> ord=new ArrayList<>();
+        for(Pedido z: orders.values()){
+            if(z.getIdcliente()==client && z.getIdempresa()==emp){
+                ord.add(z);
+            }
+        }
+        //
+        if(index>=ord.size()){
+            throw new IllegalArgumentException("Indice maior que o esperado");
+        }
+        return ord.get(index).getNumero();
+    }
+    public void adicionarProduto(int num, int obj){
+        Pedido pedido=orders.get(num);
+        if(pedido==null){
+            throw new IllegalArgumentException("Nao existe pedido em aberto");
+        }
+        if(!pedido.getEstado().equals("aberto")){
+            throw new IllegalArgumentException("Nao e possivel adcionar produtos a um pedido fechado");
+        }
+        Produto z=prod.get(obj);
+        if(z==null || z.getEmp()!=pedido.getIdempresa()){
+            throw new IllegalArgumentException("O produto nao pertence a essa empresa");
+        }
+        pedido.getProduto().add(z);
+    }
+    public void fecharPedido(int num) throws NaoEncontrado{
+        Pedido i = orders.get(num);
+        if(i==null){
+            throw new NaoEncontrado(2);
+        }
+        i.close();
+    }
+    public void removerProduto(int num, String nprod) throws NaoEncontrado,Invalido{
+        Pedido v= orders.get(num);
+        if(v==null){
+            throw new NaoEncontrado(2);
+        }
+        if(nprod==null || nprod.isBlank()){
+            throw new Invalido("Produto");
+        }
+        if(!v.getEstado().equals("aberto")){
+            throw new IllegalArgumentException("Nao e possivel remover produtos de um pedido fechado");
+        }
+        List<Produto> estoque=v.getProduto();
+        boolean removed=false;
+        for(int i=0;i<estoque.size();i++){
+            if((estoque.get(i).getNome()).equalsIgnoreCase(nprod)){
+                estoque.remove(i);
+                removed=true;
+                break;
+            }
+        }
+        if(!removed){
+            throw new NaoEncontrado(0);
+        }
+    }
+    public String getPedidos(int num, String atr) throws NaoEncontrado,Invalido{
+        Pedido z=orders.get(num);
+        if(z==null){
+            throw new NaoEncontrado(2);
+        }
+        if(atr==null || atr.isBlank()){
+            throw new Invalido("Atributo");
+        }
+        else if(atr.equalsIgnoreCase("cliente")){
+            return z.getCliente();
+        }
+        else if(atr.equalsIgnoreCase("empresa")){
+            return z.getEmpresa();
+        }
+        else if(atr.equalsIgnoreCase("estado")){
+            return z.getEstado();
+        }
+        else if(atr.equalsIgnoreCase("produtos")){
+            List<String> nomes=new ArrayList<>();
+            for(Produto w: z.getProduto()){
+                nomes.add(w.getNome());
+            }
+            return "{["+String.join(", ",nomes)+"]}";
+        }
+        else if(atr.equalsIgnoreCase("valor")){
+            return String.format(Locale.US,"%.2f",z.calcular());
+        }
+        throw new IllegalArgumentException("Atributo nao existe");
+    }
 
 }

@@ -14,6 +14,9 @@ public class NaoEncontrado extends Exception{
         else if(atr==2){
             return "Pedido nao encontrado";
         }
+        else if(atr==3){
+            return "Cliente nao encontrado";
+        }
         return null;
     }
 }
