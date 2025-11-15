@@ -7,12 +7,14 @@ public class Restaurante {
     String nome;
     String endereco;
     String tipoCozinha;
+    Usuario dono;
 
-    public Restaurante(int ru, String name, String ender, String type){
+    public Restaurante(int ru, String name, String ender, String type, Usuario user){
         this.id=ru;
         this.endereco=ender;
         this.nome=name;
         this.tipoCozinha=type;
+        this.dono=user;
     }
 
     public String getNome(){
@@ -26,5 +28,8 @@ public class Restaurante {
     }
     public int getId() {
         return this.id;
+    }
+    public Usuario getDono(){
+        return this.dono;
     }
 }

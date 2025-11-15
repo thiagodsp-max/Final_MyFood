@@ -31,5 +31,8 @@ public abstract class Usuario {
     public String getCpf(){
         return null;
     }
+    public int getId(){
+        return id;
+    }
 
 }

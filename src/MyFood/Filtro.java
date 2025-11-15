@@ -13,9 +13,9 @@ public class Filtro {
     //private Map<Integer, Produto> prod = new LinkedHashMap<>();
     //private Map<Integer, Pedido> pedidos = new LinkedHashMap<>();
 
-    public Filtro(Map<Integer, Usuario> users) {
+    public Filtro(Map<Integer, Usuario> users, Map<Integer,Restaurante> cozinha) {
         this.users = users;
-        //this.lugar=;
+        this.lugar=cozinha;
     }
 
     //Métodos de Filtragem
@@ -74,7 +74,17 @@ public class Filtro {
         }
         validauser(nome,email,senha,ender);
     }
-
+    void checkproduct(String nome, float valor, String cat) throws Invalido{
+        if(nome == null||nome.isBlank()){
+            throw new Invalido("Nome");
+        }
+        if(valor <0){
+            throw new Invalido("Valor");
+        }
+        if(cat == null||cat.isBlank()){
+            throw new Invalido("Categoria");
+        };
+    }
     //
     //
 }
