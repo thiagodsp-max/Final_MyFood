@@ -1,4 +1,4 @@
-package MyFood.Exception;
+package MyFood.Exceptions;
 
 public class NaoEncontrado extends Exception{
     public NaoEncontrado(int sign) {
@@ -14,5 +14,6 @@ public class NaoEncontrado extends Exception{
         else if(atr==2){
             return "Pedido nao encontrado";
         }
+        return null;
     }
 }

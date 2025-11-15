@@ -1,4 +1,4 @@
-package MyFood.Exception;
+package MyFood.Exceptions;
 
 public class NaoCadastrado extends Exception{
     public NaoCadastrado(int sign) {
@@ -14,5 +14,6 @@ public class NaoCadastrado extends Exception{
             else if(atr==2){
                 return "Produto nao cadastrado";
             }
+            return null;
         }
     }

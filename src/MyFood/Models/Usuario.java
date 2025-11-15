@@ -27,5 +27,9 @@ public abstract class Usuario {
     public String getSenha() {
         return this.senha;
     }
+    public abstract String getEndereco();
+    public String getCpf(){
+        return null;
+    }
 
 }

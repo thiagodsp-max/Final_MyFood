@@ -4,17 +4,14 @@ import MyFood.Exceptions.*;
 
 //Classe Principal dos Usuarios
 public class Dono extends Usuario {
-    int id;
-    String nome;
-    String email;
-    String senha;
-    String endereco;
-    String cpf;
+    private String endereco;
+    private String cpf;
 
     //Construtor de Classe
-    public Usuario(int us, String name, String mail, String pass, String adress){
+    public Dono(int us, String name, String mail, String pass, String adress, String cpf){
         super(us,name, mail,pass);
         this.endereco=adress;
+        this.cpf=cpf;
     }
 
     //Métodos para GetAtributo
