@@ -9,6 +9,7 @@ public class Restaurante {
     String tipoCozinha;
     Usuario dono;
 
+    //Agora como subclasse de Empresa, Restaurante ficou muito mais simples
     public Restaurante(int ru, String name, String ender, String type, Usuario user){
         this.id=ru;
         this.endereco=ender;

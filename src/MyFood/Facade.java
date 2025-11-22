@@ -8,40 +8,40 @@ import java.util.*;
 import java.time.*;
 
 public class Facade {
-    private Map<Integer, Usuario> users = new LinkedHashMap<>();
-    private Map<Integer, Restaurante> lugar = new LinkedHashMap<>();
-    private Map<Integer, Produto> prod = new LinkedHashMap<>();
-    private Map<Integer, Pedido> orders = new LinkedHashMap<>();
-    private int k1=0;
-    private int k2=0;
-    private int k3=0;
-    private int k4=0;//Gerador de ids únicos
+    private final Map<Integer, Usuario> users = new LinkedHashMap<>();
+    //Criar espaços para armazenar junto de Restaurantes: Farmacias e Mercados
+    private final Map<Integer, Empresa> lugar = new LinkedHashMap<>();
+    private final Map<Integer, Produto> prod = new LinkedHashMap<>();
+    private final Map<Integer, Pedido> orders = new LinkedHashMap<>();
+    private int k=0;//Gerador de ids únicos
     Filtro logico = new Filtro(users,lugar);
 
-    public void zerarSistema(){
+    public void zerarSistema(){ //TODO O SISTEMA É RESETADO
         users.clear();
-        k1=0;
+        lugar.clear();
+        prod.clear();
+        orders.clear();
+        k=0;
     }
     public void encerrarSistema(){}
 
     public void criarUsuario(String name, String email, String senha, String ender)
             throws Invalido {
         logico.validauser(name,email,senha,ender);
-        int id=k1++;
+        int id=k++;
         Usuario neo = new Cliente(id,name,email,senha,ender);
         users.put(id,neo);
     }
     public void criarUsuario(String name, String email, String senha, String ender, String cpf)
             throws Invalido {
         logico.validadono(name,email,senha,ender,cpf);
-        int id=k1++;
+        int id=k++;
         Usuario neo = new Dono(id,name,email,senha,ender,cpf);
         users.put(id,neo);
     }
 
     public String getAtributoUsuario(int id, String atr)
             throws NaoCadastrado, Invalido {
-        //Procurar pelo Id do Usuário em questão
         Usuario dude = users.get(id);
         if(dude == null){
             throw new NaoCadastrado(0);
@@ -71,15 +71,16 @@ public class Facade {
     }
 
     public int login(String email, String pass){
-        //Conferir se o Email é válido antes de procurar
+        //Conferir se os Parâmetros não estão vazios, antes de fazer a procura
         if(email==null ||pass==null ||email.isBlank() ||pass.isBlank() ){
             throw new IllegalArgumentException("Login ou senha invalidos");
         }
         //Procurar por toda o Map para ver se o email existe
         for(Map.Entry<Integer,Usuario> entry : users.entrySet() ){
             Usuario z = entry.getValue();
+            //Checar se o email está de acordo com o alvo
             if(z.getMail().equalsIgnoreCase(email)){
-                //Checar se a senha está de acordo
+                //Checar se a senha está de acordo com o alvo
                 if(z.getSenha().equals(pass)){
                     return entry.getKey(); //Retornar Id desse User
                 }
@@ -91,41 +92,69 @@ public class Facade {
         throw new IllegalArgumentException("Login ou senha invalidos");
     }
 
+    //Criando uma Empresa do Tipo Restaurante
     public int criarEmpresa(String tipoEmpresa, int dono, String nome, String endereco, String tipoCozinha)
     throws Invalido{
         //Achar a pessoa do Id dono
         Usuario chef=users.get(dono);
-        if(chef==null || !(chef instanceof Dono)){
-            throw new IllegalArgumentException("Usuario nao pode criar uma empresa");
-        }
+        logico.permitido(chef);
         if(nome == null||nome.isBlank()){
             throw new Invalido("Nome");
         }
-        //REGRAS DE EMPRESA -- logico.regra(us);
-        for(Restaurante r:lugar.values()){
-            if(r.getNome().equalsIgnoreCase(nome) && r.getDono().getId()!=dono){
-                throw new IllegalArgumentException("Empresa com esse nome ja existe");
-            }
+        //Regras da Empresa sobre Nome e Local e Busca nos Registros
+        logico.cadastroempresa(dono,nome,endereco);
+        //Criação da Empresa-Restaurante
+        int id=k++;
+        if(tipoCozinha == null||tipoCozinha.isBlank()){
+            throw new Invalido("Tipo de cozinha");
         }
-        for(Restaurante r:lugar.values()){
-            if(r.getNome().equalsIgnoreCase(nome) && r.getEnder().equalsIgnoreCase(endereco) && r.getDono().getId()==dono){
-                throw new IllegalArgumentException("Proibido cadastrar duas empresas com o mesmo nome e local");
-            }
-        }
-        //Criação da Empresa
-        int id=k2++;
         Restaurante cozinha = new Restaurante(id,nome,endereco,tipoCozinha,chef);
         lugar.put(id,cozinha);
         return id;
     }
+    //Criando Empresa do Tipo Mercado
+    public int criarEmpresa(String tipoEmpresa, int dono, String nome, String endereco, String open, String close, String tipoMercado)
+    throws Invalido,NaoCadastrado{
+        if(tipoEmpresa==null||tipoEmpresa.isBlank()){
+            throw new Invalido("Tipo de empresa");
+        }
+        Usuario chefe=users.get(dono);
+        //Somente Donos podem criar Empresas
+        logico.permitido(chefe);
+        if(chefe == null){
+            throw new NaoCadastrado(0);
+        }
+        //Checagem de Invalido do Nome - Endereco - V - etc
+        if(nome == null||nome.isBlank()){
+            throw new Invalido("Nome");
+        }
+        if(endereco == null||endereco.isBlank()){
+            throw new Invalido("Endereco da empresa");
+        }
+        logico.periodo(open,close);
+        //Validação dos Tipos de Mercado
+        if (tipoMercado==null||tipoMercado.isBlank()) {
+            throw new Invalido("Tipo de mercado");
+        }
+        if (!tipoMercado.equalsIgnoreCase("supermercado") &&
+                !tipoMercado.equalsIgnoreCase("minimercado") &&
+                !tipoMercado.equalsIgnoreCase("atacadista")) {
+            throw new Invalido("Tipo de mercado");
+        }
+        //Verificação das Regras da Empresa
+        logico.cadastroempresa(dono,nome,endereco);
+        //Criação Própria para o Mercado
+        int emp=k++;
+        Mercado m=new Mercado(emp,nome,endereco,tipoMercado,chefe,open,close);
+        lugar.put(emp,m);
+        return emp;
+    }
 
     public String getEmpresasDoUsuario(int dono){
         Usuario z = users.get(dono);
-        if(z==null || !(z instanceof Dono)){
-            throw new IllegalArgumentException("Usuario nao pode criar uma empresa");
-        }
+        logico.permitido(z);
         List<String> empresas=new ArrayList<>();
-        for(Restaurante x: lugar.values()){
+        for(Empresa x: lugar.values()){
             if(x.getDono().getId() == dono){
                 empresas.add("["+x.getNome()+", "+x.getEnder()+"]");
             }
@@ -141,16 +170,14 @@ public class Facade {
             throw new Invalido("Indice");
         }
         Usuario y=users.get(idDono);
-        if(y==null | !(y instanceof Dono)){
-            throw new IllegalArgumentException("Usuario nao pode criar uma empresa");
-        }
-        List<Restaurante> empresas=new ArrayList<>();
-        for(Restaurante x: lugar.values()){
+        logico.permitido(y);
+        List<Empresa> empresas=new ArrayList<>();
+        //Adicionar no Array, as Empresas com o id do mesmo Dono
+        for(Empresa x: lugar.values()){
             if(x.getDono().getId()==idDono && x.getNome().equalsIgnoreCase(nome)){
                 empresas.add(x);
             }
         }
-        //
         if(empresas.isEmpty()){
             throw new IllegalArgumentException("Nao existe empresa com esse nome");
         }
@@ -161,9 +188,8 @@ public class Facade {
     }
 
     public String getAtributoEmpresa(int emp, String atr)throws NaoCadastrado,Invalido{
-        Restaurante x = lugar.get(emp);
-
-        if(x == null){
+        Empresa x = lugar.get(emp);
+        if(x == null){ //Analisar se
             throw new NaoCadastrado(1);
         }
         if(atr==null || atr.isBlank()){
@@ -172,18 +198,44 @@ public class Facade {
             return x.getNome();
         } else if (atr.equalsIgnoreCase("endereco")) {
             return x.getEnder();
-        } else if (atr.equalsIgnoreCase("tipoCozinha")) {
-            return x.getTipo();
         } else if (atr.equalsIgnoreCase("dono")) {
             return x.getDono().getNome();
         }
-        //
+        if(x instanceof Restaurante y){
+            if (atr.equalsIgnoreCase("tipoCozinha")) {
+                return x.getTipo();
+            }
+        }
+        if(x instanceof Mercado y){
+            if (atr.equalsIgnoreCase("tipoMercado")) {
+                return y.getTipo();
+            } else if (atr.equalsIgnoreCase("abre")) {
+                return y.getOpen();
+            } else if (atr.equalsIgnoreCase("fecha")) {
+                return y.getClose();
+            }
+        }
+        //Se o atr não bater com nenhum dos Atributos
         throw new Invalido("Atributo");
+    }
+
+    //Método Introduzido nos Testes 5 - Horário de Funcionamento do Mercado
+    public void alterarFuncionamento(int emp, String abrir, String fechar)
+            throws NaoCadastrado,Invalido{
+        Empresa z=lugar.get(emp);
+        if(z==null){
+            throw new NaoCadastrado(1);
+        } if(!(z instanceof Mercado w)){
+            throw new IllegalArgumentException("Nao e um mercado valido");
+        }
+        logico.periodo(abrir,fechar);
+        w.setOpen(abrir);
+        w.setClose(fechar);
     }
 
     public int criarProduto(int emp, String nome, float valor, String cat)
     throws Invalido,NaoEncontrado{
-        Restaurante x = lugar.get(emp);
+        Empresa x = lugar.get(emp);
         if(x == null){
             throw new NaoEncontrado(1);
         }
@@ -193,12 +245,13 @@ public class Facade {
                 throw new IllegalArgumentException("Ja existe um produto com esse nome para essa empresa");
             }
         }
-        //
-        int id=k3++;
+        //Após a Validação, a criação do produto é feita
+        int id=k++;
         Produto novo=new Produto(id,nome,valor,cat,emp);
         prod.put(id,novo);
         return id;
     }
+
     public void editarProduto(int prods, String nome, float valor, String cat)
     throws NaoCadastrado,Invalido{
         Produto x=prod.get(prods);
@@ -211,6 +264,7 @@ public class Facade {
         x.setCateg(cat);
         x.setValor(valor);
     }
+
     public String getProduto(String nome, int emp, String atr)
     throws NaoEncontrado{
         Produto target=null;
@@ -231,8 +285,9 @@ public class Facade {
         }
         throw new IllegalArgumentException("Atributo nao existe");
     }
+
     public String listarProdutos(int emp) throws NaoEncontrado{
-        Restaurante y = lugar.get(emp);
+        Empresa y = lugar.get(emp);
         if(y==null){
             throw new NaoEncontrado(1);
         }
@@ -253,7 +308,7 @@ public class Facade {
         if(!(x instanceof Cliente)){
             throw new IllegalArgumentException("Dono de empresa nao pode fazer um pedido");
         }
-        Restaurante y=lugar.get(emp);
+        Empresa y=lugar.get(emp);
         if(y==null){
             throw new NaoEncontrado(1);
         }
@@ -263,11 +318,12 @@ public class Facade {
             }
         }
         //CRIAR UM PEDIDO
-        int number=k4++;
+        int number=k++;
         Pedido novo=new Pedido(number,x,y);
         orders.put(number,novo);
         return number;
     }
+
     public int getNumeroPedido(int client, int emp, int index) throws Invalido{
         if(index<0){
             throw new Invalido("Index");
@@ -278,12 +334,12 @@ public class Facade {
                 ord.add(z);
             }
         }
-        //
         if(index>=ord.size()){
             throw new IllegalArgumentException("Indice maior que o esperado");
         }
         return ord.get(index).getNumero();
     }
+
     public void adicionarProduto(int num, int obj){
         Pedido pedido=orders.get(num);
         if(pedido==null){
@@ -298,6 +354,7 @@ public class Facade {
         }
         pedido.getProduto().add(z);
     }
+
     public void fecharPedido(int num) throws NaoEncontrado{
         Pedido i = orders.get(num);
         if(i==null){
@@ -305,6 +362,7 @@ public class Facade {
         }
         i.close();
     }
+
     public void removerProduto(int num, String nprod) throws NaoEncontrado,Invalido{
         Pedido v= orders.get(num);
         if(v==null){
@@ -329,6 +387,7 @@ public class Facade {
             throw new NaoEncontrado(0);
         }
     }
+
     public String getPedidos(int num, String atr) throws NaoEncontrado,Invalido{
         Pedido z=orders.get(num);
         if(z==null){

@@ -2,38 +2,24 @@ package MyFood;
 
 import MyFood.Exceptions.Invalido;
 import MyFood.Exceptions.NaoCadastrado;
-import MyFood.Models.Restaurante;
+import MyFood.Models.Dono;
+import MyFood.Models.Empresa;
 import MyFood.Models.Usuario;
 
 import java.util.Map;
 
 public class Filtro {
+    /*Nessa classe ficará SOMENTE métodos que lidem com a lógica de validação e que são
+    recorrentes, para otimizar a Facade e garantir o direcionamento a Exception correta*/
     private Map<Integer, Usuario> users;
-    private Map<Integer, Restaurante> lugar;
-    //private Map<Integer, Produto> prod = new LinkedHashMap<>();
-    //private Map<Integer, Pedido> pedidos = new LinkedHashMap<>();
+    private Map<Integer, Empresa> lugar;
 
-    public Filtro(Map<Integer, Usuario> users, Map<Integer,Restaurante> cozinha) {
+    public Filtro(Map<Integer, Usuario> users, Map<Integer, Empresa> cozinha) {
         this.users = users;
         this.lugar=cozinha;
     }
 
-    //Métodos de Filtragem
-    /*
-    public int presente(int emp) throws Invalido,NaoCadastrado {
-        //Checar se o User, Restaurante, etc. Existe dentro do sistema!!
-        int id;
-        try { //Precisamos checar se o emp enviado de fato existe, ou é inválido
-            //id = Integer.parseInt(String.valueOf(emp));
-        } catch (NumberFormatException e) {
-            if (emp.isBlank()) throw new NaoCadastrado("emp");
-            else throw new IllegalArgumentException();
-        }
-        return id;
-    }
-     */
-
-    //Funções Complementares
+    //Funções Complementares - para Login e Senha
     private boolean emailValido(String email) {
         if (email == null) return false;
         email = email.trim();
@@ -44,11 +30,30 @@ public class Filtro {
         cpf = cpf.trim();
         return cpf.length()==14;
     }
+    //Funções Complementares - Horarios do Mercado
+    boolean formatohora(String time){
+        return time.matches("^[0-9]{2}:[0-9]{2}");
+        //validar se Horas está entre 0 e 23 e Minutos entre 0 e 59
+        //É importante que a hora de abrir seja menor que a hora de fechar
+    }
+    boolean valorhora(String time){
+        if(time==null) return false;
+        try{
+            //Definir Hora e Minuto como partes da mesma string
+            int hour=Integer.parseInt(time.substring(0,2));
+            int min=Integer.parseInt(time.substring(3,5));
+            return  (hour>=0 && hour<24) && (min >=0 && min <=59);
+        } catch(Exception e){
+            return false;
+        }
+    }
 
+    //Métodos de Filtragem
 
-    //Verificar se os valores são válidos ou não
+    //Validação dos Parâmetros do Construtor
     protected void validauser(String nome, String email, String senha,String ender)
             throws Invalido{
+        //Validação de todos os valores de Cliente
         if (nome==null || nome.isBlank()) {
             throw new Invalido("Nome");
         }
@@ -61,6 +66,7 @@ public class Filtro {
         if (email==null||email.isBlank()||!emailValido(email)) {
             throw new Invalido("Email");
         }
+        //Verifica se já existe algum email igual ao do Parâmetro
         for(Usuario x: users.values()){
             if(x.getMail().equalsIgnoreCase(email)){
                 throw new IllegalArgumentException("Conta com esse email ja existe");
@@ -69,11 +75,14 @@ public class Filtro {
     }
     protected void validadono(String nome, String email, String senha,String ender, String cpf)
             throws Invalido{
+        //Validação Única para Usuários do Tipo Dono
         if (cpf == null || cpf.isBlank()||cpf.length()!=14) {
             throw new Invalido("CPF");
         }
+        //Chama a Validação de Cliente para complementar o restante dos valores
         validauser(nome,email,senha,ender);
     }
+    //Validação do Construtor de Produto
     void checkproduct(String nome, float valor, String cat) throws Invalido{
         if(nome == null||nome.isBlank()){
             throw new Invalido("Nome");
@@ -83,8 +92,40 @@ public class Filtro {
         }
         if(cat == null||cat.isBlank()){
             throw new Invalido("Categoria");
-        };
+        }
     }
-    //
-    //
+
+    //O Usuario é autorizado a criar tal Entidade??
+    void permitido(Usuario w){
+        //Somente Donos podem criar Restaurantes Mercados e Farmacias
+        if(w==null || !(w instanceof Dono)){
+            throw new IllegalArgumentException("Usuario nao pode criar uma empresa");
+        }
+    }
+
+    //Simplificando as Regras de criar Empresas
+    public void cadastroempresa(int dono, String nome, String endereco){
+        for(Empresa r:lugar.values()){
+            if(r.getNome().equalsIgnoreCase(nome)){
+                if(r.getDono().getId()==dono && r.getEnder().equalsIgnoreCase(endereco)){
+                    throw new IllegalArgumentException("Proibido cadastrar duas empresas com o mesmo nome e local");
+                }
+                else if(r.getDono().getId()!=dono){
+                    throw new IllegalArgumentException("Empresa com esse nome ja existe");
+                }
+            }
+        }
+    }
+    //Validação de Horário
+    public void periodo(String abre, String fecha) throws Invalido{
+        if(abre==null||fecha==null){
+            throw new Invalido("Horario");
+        }
+        if(!formatohora(abre) || !formatohora(fecha)){
+            throw new Invalido("Formato de hora");
+        }
+        if(!valorhora(abre) || !valorhora(fecha) || abre.compareTo(fecha)>0){
+            throw new Invalido("Horario");
+        }
+    }
 }
