@@ -13,7 +13,7 @@ public class Pedido {
     //Lista de Produtos adicionados
     private List<Produto> buyed;
 
-    public Pedido(int num, Usuario cliente,Restaurante empresa){
+    public Pedido(int num, Usuario cliente,Empresa empresa){
         this.numero=num;
         this.idcliente=cliente.getId();
         this.idempresa=empresa.getId();
