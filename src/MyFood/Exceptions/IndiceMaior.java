@@ -2,6 +2,6 @@ package MyFood.Exceptions;
 
 public class IndiceMaior extends Exception {
     public IndiceMaior() {
-        super("Indice maior do que o esperado");
+        super("Indice maior que o esperado");
     }
 }
