@@ -2,6 +2,7 @@ package MyFood;
 
 import MyFood.Exceptions.Invalido;
 import MyFood.Exceptions.NaoCadastrado;
+import MyFood.Exceptions.NaoEncontrado;
 import MyFood.Models.Dono;
 import MyFood.Models.Empresa;
 import MyFood.Models.Usuario;
@@ -19,16 +20,11 @@ public class Filtro {
         this.lugar=cozinha;
     }
 
-    //Funções Complementares - para Login e Senha
+    //Funções Complementares - Email
     private boolean emailValido(String email) {
         if (email == null) return false;
         email = email.trim();
         return email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
-    }
-    private boolean cpfValido(String cpf) {
-        if (cpf == null) return false;
-        cpf = cpf.trim();
-        return cpf.length()==14;
     }
     //Funções Complementares - Horarios do Mercado
     boolean formatohora(String time){
@@ -82,6 +78,19 @@ public class Filtro {
         //Chama a Validação de Cliente para complementar o restante dos valores
         validauser(nome,email,senha,ender);
     }
+
+    protected void validaempresa(Usuario chefe, String nome, String ender) throws Invalido, NaoCadastrado {
+        if(chefe==null){
+            throw new NaoCadastrado(0);
+        }
+        if(nome == null||nome.isBlank()){
+            throw new Invalido("Nome");
+        }
+        if(ender == null||ender.isBlank()){
+            throw new Invalido("Endereco da empresa");
+        }
+    }
+
     //Validação do Construtor de Produto
     void checkproduct(String nome, float valor, String cat) throws Invalido{
         if(nome == null||nome.isBlank()){

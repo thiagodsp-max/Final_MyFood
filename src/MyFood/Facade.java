@@ -1,5 +1,6 @@
 package MyFood;
 
+import MyFood.Exceptions.IndiceMaior;
 import MyFood.Exceptions.NaoCadastrado;
 import MyFood.Exceptions.Invalido;
 import MyFood.Exceptions.NaoEncontrado;
@@ -94,13 +95,15 @@ public class Facade {
 
     //Criando uma Empresa do Tipo Restaurante
     public int criarEmpresa(String tipoEmpresa, int dono, String nome, String endereco, String tipoCozinha)
-    throws Invalido{
+    throws Invalido,NaoCadastrado{
         //Achar a pessoa do Id dono
         Usuario chef=users.get(dono);
         logico.permitido(chef);
-        if(nome == null||nome.isBlank()){
-            throw new Invalido("Nome");
-        }
+
+        logico.validaempresa(chef,nome,endereco);
+        //if(nome == null||nome.isBlank()){
+            //throw new Invalido("Nome");
+        //}
         //Regras da Empresa sobre Nome e Local e Busca nos Registros
         logico.cadastroempresa(dono,nome,endereco);
         //Criação da Empresa-Restaurante
@@ -124,13 +127,17 @@ public class Facade {
         if(chefe == null){
             throw new NaoCadastrado(0);
         }
-        //Checagem de Invalido do Nome - Endereco - V - etc
+        /*/Checagem de Invalido do Nome - Endereco - V - etc
         if(nome == null||nome.isBlank()){
             throw new Invalido("Nome");
         }
         if(endereco == null||endereco.isBlank()){
             throw new Invalido("Endereco da empresa");
         }
+
+         */
+        logico.validaempresa(chefe,nome,endereco);
+        //Validação do Tempo de Abrir e de Fechar
         logico.periodo(open,close);
         //Validação dos Tipos de Mercado
         if (tipoMercado==null||tipoMercado.isBlank()) {
@@ -149,6 +156,25 @@ public class Facade {
         lugar.put(emp,m);
         return emp;
     }
+    //Criando Empresa do Tipo Farmacia
+    public int criarEmpresa(String tipoEmpresa, int dono, String nome, String ender, boolean hora24, int numero)
+    throws Invalido,NaoCadastrado{
+        if(tipoEmpresa==null||tipoEmpresa.isBlank()||!tipoEmpresa.equalsIgnoreCase("farmacia")){
+            throw new Invalido("Tipo de empresa");
+        }
+        Usuario chefe=users.get(dono);
+        //Verifica se o Usuario pode criar Empresa
+        logico.permitido(chefe);
+        //Abreviando o Loop que analisa nome, endereço e dono
+        logico.validaempresa(chefe,nome,ender);
+        //Busca para checar as Regras da Empresa
+        logico.cadastroempresa(dono,nome,ender);
+
+        int emp=k++;
+        Farmacia z = new Farmacia(emp,nome,ender,hora24,numero,chefe);
+        lugar.put(emp,z);
+        return emp;
+    }
 
     public String getEmpresasDoUsuario(int dono){
         Usuario z = users.get(dono);
@@ -162,7 +188,7 @@ public class Facade {
         return "{"+empresas.toString()+"}";
     }
 
-    public int getIdEmpresa(int idDono, String nome, int index) throws Invalido{
+    public int getIdEmpresa(int idDono, String nome, int index) throws Invalido,IndiceMaior{
         if(nome==null || nome.isBlank()){
             throw new Invalido("Nome");
         }
@@ -182,7 +208,7 @@ public class Facade {
             throw new IllegalArgumentException("Nao existe empresa com esse nome");
         }
         if(index >= empresas.size()){
-            throw new IllegalArgumentException("Indice maior que o esperado");
+            throw new IndiceMaior();
         }
         return empresas.get(index).getId();
     }
@@ -215,6 +241,13 @@ public class Facade {
                 return y.getClose();
             }
         }
+        if(x instanceof Farmacia y){
+            if (atr.equalsIgnoreCase("aberto24horas")) {
+                return String.valueOf(y.isaberto24());
+            } else if (atr.equalsIgnoreCase("numeroFuncionarios")) {
+                return String.valueOf(y.getFuncionarios());
+            }
+        }
         //Se o atr não bater com nenhum dos Atributos
         throw new Invalido("Atributo");
     }
@@ -228,6 +261,7 @@ public class Facade {
         } if(!(z instanceof Mercado w)){
             throw new IllegalArgumentException("Nao e um mercado valido");
         }
+        //
         logico.periodo(abrir,fechar);
         w.setOpen(abrir);
         w.setClose(fechar);
@@ -324,7 +358,7 @@ public class Facade {
         return number;
     }
 
-    public int getNumeroPedido(int client, int emp, int index) throws Invalido{
+    public int getNumeroPedido(int client, int emp, int index) throws Invalido,IndiceMaior{
         if(index<0){
             throw new Invalido("Index");
         }
@@ -335,7 +369,7 @@ public class Facade {
             }
         }
         if(index>=ord.size()){
-            throw new IllegalArgumentException("Indice maior que o esperado");
+            throw new IndiceMaior();
         }
         return ord.get(index).getNumero();
     }
