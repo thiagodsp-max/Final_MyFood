@@ -14,6 +14,9 @@ public class Facade {
     private final Map<Integer, Empresa> lugar = new LinkedHashMap<>();
     private final Map<Integer, Produto> prod = new LinkedHashMap<>();
     private final Map<Integer, Pedido> orders = new LinkedHashMap<>();
+    //Adicionar registros para Entregadores e suas Empresas
+    private final Map<Integer, List<Integer>> porEmpresa = new LinkedHashMap<>();
+    private final Map<Integer, List<Integer>> porEntregador = new LinkedHashMap<>();
     private int k=0;//Gerador de ids únicos
     Filtro logico = new Filtro(users,lugar);
 
@@ -38,6 +41,13 @@ public class Facade {
         logico.validadono(name,email,senha,ender,cpf);
         int id=k++;
         Usuario neo = new Dono(id,name,email,senha,ender,cpf);
+        users.put(id,neo);
+    }
+    public void criarUsuario(String name, String email, String senha, String endereco, String veiculo, String placa) throws Invalido{
+        //Validação dos Campos de Entregador
+        logico.validaentregador(name,email,senha,endereco,veiculo,placa);
+        int id=k++;
+        Usuario neo = new Entregador(id,name,email,senha,endereco,veiculo,placa);
         users.put(id,neo);
     }
 
@@ -66,6 +76,14 @@ public class Facade {
                 throw new Invalido("CPF");
             }
             return cpf;
+        }
+        if(dude instanceof Entregador z){
+            if(atr.equalsIgnoreCase("veiculo")){
+                return ((Entregador) dude).getVeiculo();
+            }
+            else if(atr.equalsIgnoreCase("placa")){
+                return ((Entregador) dude).getPlaca();
+            }
         }
         //Não é nenhum atributo conhecido
         throw new Invalido("Atributo");
@@ -101,9 +119,6 @@ public class Facade {
         logico.permitido(chef);
 
         logico.validaempresa(chef,nome,endereco);
-        //if(nome == null||nome.isBlank()){
-            //throw new Invalido("Nome");
-        //}
         //Regras da Empresa sobre Nome e Local e Busca nos Registros
         logico.cadastroempresa(dono,nome,endereco);
         //Criação da Empresa-Restaurante
@@ -127,15 +142,6 @@ public class Facade {
         if(chefe == null){
             throw new NaoCadastrado(0);
         }
-        /*/Checagem de Invalido do Nome - Endereco - V - etc
-        if(nome == null||nome.isBlank()){
-            throw new Invalido("Nome");
-        }
-        if(endereco == null||endereco.isBlank()){
-            throw new Invalido("Endereco da empresa");
-        }
-
-         */
         logico.validaempresa(chefe,nome,endereco);
         //Validação do Tempo de Abrir e de Fechar
         logico.periodo(open,close);
@@ -450,6 +456,67 @@ public class Facade {
             return String.format(Locale.US,"%.2f",z.calcular());
         }
         throw new IllegalArgumentException("Atributo nao existe");
+    }
+
+    //Métodos para Entregadores
+    public void cadastrarEntregador(int emp, int us) throws NaoCadastrado, NaoEncontrado, Invalido{
+        Empresa local=lugar.get(emp);
+        if(local==null){
+            throw new NaoEncontrado(1);
+        }
+        Usuario boy=users.get(us);
+        if(boy == null){
+            throw new NaoCadastrado(0);
+        }
+        if(!(boy instanceof Entregador)){
+            throw new IllegalArgumentException("Usuario nao e um entregador");
+        }
+        /*Precisaremos utilizar o método PutIfAbsent, para que caso o valor de
+        associado a emp não esteja pronto, então seja colocado um valor provisorio
+        que retorna null, isso ajudará no futuro a imprimir vários elementos da lista*/
+        porEmpresa.putIfAbsent(emp,new ArrayList<>());
+        if(porEmpresa.get(emp).contains(us)){
+            throw new IllegalArgumentException("Entregador ja cadastrado");
+        }
+        porEmpresa.get(emp).add(us);
+        porEntregador.putIfAbsent(us,new ArrayList<>());
+        porEntregador.get(us).add(emp);
+    }
+
+    public String getEntregadores(int empresa) throws NaoEncontrado{
+        Empresa emp=lugar.get(empresa);
+        if(emp==null){
+            throw new NaoEncontrado(1);
+        }
+        /*Precisaremos usar o Método GetOrDefault para conseguir inserir no Entregador
+        os multiplos Valores que presentes no Id Empresa, e caso não haja nada, ele
+        inserirá um Array vazio, permitindo que os resultados possam ser impressos*/
+        List<Integer> listado=porEmpresa.getOrDefault(empresa,new ArrayList<>());
+        List<String> emails=new ArrayList<>();
+        //Inserir na Lista
+        for(int id:listado){
+            Entregador z = (Entregador) users.get(id);
+            emails.add(z.getMail());
+        }
+        return "{["+String.join(", ",emails)+"]}";
+    }
+
+    public String getEmpresas(int entregador) throws NaoCadastrado{
+        Usuario emp=users.get(entregador);
+        if(emp==null){
+            throw new NaoCadastrado(0);
+        }
+        if(!(emp instanceof Entregador)){
+            throw new IllegalArgumentException("Usuario nao e um entregador");
+        }
+        List<Integer> listado=porEntregador.getOrDefault(entregador,new ArrayList<>());
+        List<String> emails=new ArrayList<>();
+        //
+        for(int id:listado){
+            Empresa z = lugar.get(id);
+            emails.add("["+z.getNome()+", "+z.getEnder()+"]");
+        }
+        return "{["+String.join(", ",emails)+"]}";
     }
 
 }

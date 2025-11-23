@@ -5,6 +5,7 @@ import MyFood.Exceptions.NaoCadastrado;
 import MyFood.Exceptions.NaoEncontrado;
 import MyFood.Models.Dono;
 import MyFood.Models.Empresa;
+import MyFood.Models.Entregador;
 import MyFood.Models.Usuario;
 
 import java.util.Map;
@@ -76,6 +77,23 @@ public class Filtro {
             throw new Invalido("CPF");
         }
         //Chama a Validação de Cliente para complementar o restante dos valores
+        validauser(nome,email,senha,ender);
+    }
+    protected void validaentregador(String nome, String email, String senha,String ender, String veiculo, String placa)
+            throws Invalido{
+        if (veiculo == null || veiculo.isBlank()) {
+            throw new Invalido("Veiculo");
+        }
+        if (placa == null || placa.isBlank()) {
+            throw new Invalido("Placa");
+        }
+        for(Usuario y: users.values()){
+            if(y instanceof Entregador z) {
+                if (z.getPlaca().equalsIgnoreCase(placa)) {
+                    throw new Invalido("Placa");
+                }
+            }
+        }
         validauser(nome,email,senha,ender);
     }
 

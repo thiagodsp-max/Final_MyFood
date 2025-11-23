@@ -21,6 +21,8 @@ public class Main {
         //EasyAccept.main(new String[]{facade, "MyFood-main/Milestone 02/us5_2.txt"});
         //EasyAccept.main(new String[]{facade, "MyFood-main/Milestone 02/us6_1.txt"});
         //EasyAccept.main(new String[]{facade, "MyFood-main/Milestone 02/us6_2.txt"});
+        //EasyAccept.main(new String[]{facade, "MyFood-main/Milestone 02/us7_1.txt"});
+        //EasyAccept.main(new String[]{facade, "MyFood-main/Milestone 02/us7_2.txt"});
 
     }
 }
