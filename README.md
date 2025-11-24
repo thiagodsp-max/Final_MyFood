@@ -3,3 +3,6 @@ Projeto para ser implementado na disciplina de programação 2 UFAL utilizando-s
 
 ### Link para a pagina do site do projeto.
 [MyFood](https://arturfarias.github.io/MyFood/)
+
+## IMPORTANTE
+Caso não consiga rodar o arquivo do Programa, instalar o EasyAccept.jar e Rodar os testes individualmente
