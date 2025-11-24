@@ -23,5 +23,7 @@ public class Entregador extends Usuario{
     public String getPlaca() {
         return this.placa;
     }
-
+    //public boolean isEmEntrega(){
+        //return false;
+    //}
 }

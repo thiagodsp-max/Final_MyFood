@@ -54,4 +54,9 @@ public class Pedido {
         }
         return total;
     }
+    //Novo Método de Status para as Entregas
+    public void setStatus(String estado){
+        this.status=estado;
+    }
+
 }
